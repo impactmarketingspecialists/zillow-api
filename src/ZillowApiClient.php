@@ -4,8 +4,8 @@ namespace ZillowApi;
 
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\ClientInterface as GuzzleClientInterface;
-use GuzzleHttp\Exception\XmlParseException;
-use GuzzleHttp\Message\ResponseInterface;
+use ZillowApi\Exception\XmlParseException;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use ZillowApi\Model\Response;
 
@@ -151,12 +151,13 @@ class ZillowApiClient
         return $this->client;
     }
 
-    /**
-     * @param string $name
-     * @param array $arguments
-     *
-     * @return Response
-     */
+  /**
+   * @param string $name
+   * @param array $arguments
+   *
+   * @return Response
+   * @throws ZillowException
+   */
     public function execute($name, $arguments)
     {
         if (!in_array($name, self::$validMethods)) {
@@ -204,7 +205,7 @@ class ZillowApiClient
 
         if ($rawResponse->getStatusCode() === '200') {
             try {
-                $responseArray = json_decode(json_encode($rawResponse->xml()), true);
+                $responseArray = json_decode(json_encode($this->parseXML($rawResponse)), true);
             } catch (XmlParseException $e) {
                 $this->fail($response, $rawResponse, true, $e);
 
@@ -254,6 +255,37 @@ class ZillowApiClient
                 )
             );
         }
+    }
+
+    private function parseXML(ResponseInterface $response) {
+      /**
+       * xml method from Guzzle 5
+       */
+      $config = [];
+      $disableEntities = libxml_disable_entity_loader(true);
+      $internalErrors = libxml_use_internal_errors(true);
+      try {
+        // Allow XML to be retrieved even if there is no response body
+        $xml = new \SimpleXMLElement(
+            (string) $response->getBody() ?: '<root />',
+            isset($config['libxml_options']) ? $config['libxml_options'] : LIBXML_NONET,
+            false,
+            isset($config['ns']) ? $config['ns'] : '',
+            isset($config['ns_is_prefix']) ? $config['ns_is_prefix'] : false
+        );
+        libxml_disable_entity_loader($disableEntities);
+        libxml_use_internal_errors($internalErrors);
+      } catch (\Exception $e) {
+        libxml_disable_entity_loader($disableEntities);
+        libxml_use_internal_errors($internalErrors);
+        throw new XmlParseException(
+            'Unable to parse response body into XML: ' . $e->getMessage(),
+            $this,
+            $e,
+            (libxml_get_last_error()) ?: null
+        );
+      }
+      return $xml;
     }
 
     /**

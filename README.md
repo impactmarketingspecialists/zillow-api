@@ -4,7 +4,7 @@ This is a simple PHP Wrapper for the Zillow API services.
 
 ## Requirements
 
-depends on PHP 5.4+, Guzzle 4+.
+depends on PHP 5.4+, Guzzle 6+.
 
 ##Installation
 
