@@ -203,7 +203,7 @@ class ZillowApiClient
     {
         $response      = new Response();
 
-        if ($rawResponse->getStatusCode() === '200') {
+        if ($rawResponse->getStatusCode() === 200) {
             try {
                 $responseArray = json_decode(json_encode($this->parseXML($rawResponse)), true);
             } catch (XmlParseException $e) {
