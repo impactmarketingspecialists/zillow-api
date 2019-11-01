@@ -1,5 +1,5 @@
 {
-    "name": "brentmullen/zillow-api",
+    "name": "impactmarketingspecialists/zillow-api",
     "type": "library",
     "description": "Simple PHP wrapper for Zillow API",
     "keywords": ["zillow", "php", "api"],
